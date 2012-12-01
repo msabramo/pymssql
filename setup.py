@@ -52,36 +52,38 @@ WINDOWS = False
 # 32 bit or 64 bit system?
 BITNESS = struct.calcsize("P") * 8
 
+include_dirs = []
+library_dirs = []
+
 if sys.platform == 'win32':
     WINDOWS = True
-    include_dirs = []
-    library_dirs = []
 else:
-    FREETDS = osp.join(ROOT, 'freetds', 'nix_%s' % BITNESS)
-    include_dirs = [
-        osp.join(FREETDS, 'include')
-    ]
-    library_dirs = [
-        osp.join(FREETDS, 'lib')
-    ]
+    if sys.platform == 'darwin':
+        fink = '/sw/'
+        include_dirs.insert(0, fink + 'include')
+        library_dirs.insert(0, fink + 'lib')
+
+        # some mac ports paths
+        include_dirs += [
+            '/opt/local/include',
+            '/opt/local/include/freetds',
+            '/opt/local/freetds/include'
+        ]
+        library_dirs += [
+            '/opt/local/lib',
+            '/opt/local/lib/freetds',
+            '/opt/local/freetds/lib'
+        ]
+    else:
+        FREETDS = osp.join(ROOT, 'freetds', 'nix_%s' % BITNESS)
+        include_dirs = [
+            osp.join(FREETDS, 'include')
+        ]
+        library_dirs = [
+            osp.join(FREETDS, 'lib')
+        ]
+
     libraries = [ 'sybdb', 'rt' ]
-
-if sys.platform == 'darwin':
-    fink = '/sw/'
-    include_dirs.insert(0, fink + 'include')
-    library_dirs.insert(0, fink + 'lib')
-
-    # some mac ports paths
-    include_dirs += [
-        '/opt/local/include',
-        '/opt/local/include/freetds',
-        '/opt/local/freetds/include'
-    ]
-    library_dirs += [
-        '/opt/local/lib',
-        '/opt/local/lib/freetds',
-        '/opt/local/freetds/lib'
-    ]
 
 class build_ext(_build_ext):
     """
