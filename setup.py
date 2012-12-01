@@ -90,7 +90,7 @@ class build_ext(_build_ext):
     """
 
     def build_extensions(self):
-        global library_dirs, include_dirs
+        global library_dirs, include_dirs, libraries
 
         if WINDOWS:
             # Detect the compiler so we can specify the correct command line switches
@@ -131,7 +131,6 @@ class build_ext(_build_ext):
                 e.library_dirs.append(osp.join(FREETDS, 'lib'))
 
         else:
-            libraries = [ "sybdb" ]   # on Mandriva you may have to change it to sybdb_mssql
             for e in self.extensions:
                 e.libraries.extend(libraries)
         _build_ext.build_extensions(self)
