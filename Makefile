@@ -9,7 +9,7 @@ install: parts/freetds
 	CFLAGS="-I$(PWD)/parts/freetds/include" LDFLAGS="-L$(PWD)/parts/freetds/lib" $(PYTHON) setup.py install
 
 toxtest: bin/tox
-	CFLAGS="-I$(PWD)/parts/freetds/include" LDFLAGS="-L$(PWD)/parts/freetds/lib" bin/tox
+	CFLAGS="-I$(PWD)/parts/freetds/include" LDFLAGS="-L$(PWD)/parts/freetds/lib" LD_LIBRARY_PATH="$(PWD)/parts/freetds/lib" bin/tox
 
 bin/tox: bin/buildout buildout.cfg
 	$(MAKE) do_buildout
