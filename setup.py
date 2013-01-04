@@ -39,8 +39,11 @@ except ImportError:
 from distutils import log
 from distutils.cmd import Command
 from distutils.command.clean import clean as _clean
+from distutils import ccompiler
 from Cython.Distutils import build_ext as _build_ext
 import struct
+
+compiler = ccompiler.new_compiler()
 
 _extra_compile_args = [
     '-DMSDBLIB'
@@ -58,13 +61,19 @@ if sys.platform == 'win32':
     library_dirs = []
 else:
     FREETDS = osp.join(ROOT, 'freetds', 'nix_%s' % BITNESS)
-    include_dirs = [
-        osp.join(FREETDS, 'include')
-    ]
-    library_dirs = [
-        osp.join(FREETDS, 'lib')
-    ]
-    libraries = [ 'sybdb', 'rt' ]
+    if compiler.has_function('tdsdbopen', libraries=['sybdb']):
+        include_dirs = [
+            osp.join(FREETDS, 'include')
+        ]
+        library_dirs = [
+            osp.join(FREETDS, 'lib')
+        ]
+    else:
+        sys.stderr.write('Library in %s does not seem to be usable - skipping linking with it...\n' % osp.join(FREETDS, 'lib'))
+        include_dirs = library_dirs = []
+    libraries = [ 'sybdb' ]
+    if compiler.has_function('clock_gettime', libraries=['rt']):
+        libraries.append('rt')
 
 if sys.platform == 'darwin':
     fink = '/sw/'
