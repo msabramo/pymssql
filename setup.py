@@ -290,6 +290,11 @@ class DevelopCmd(STDevelopCmd):
         self.distribution.entry_points['nose.plugins'] = ['pymssql_config = tests.nose_plugin:ConfigPlugin']
         STDevelopCmd.run(self)
 
+# These requirements are for pymssql_shell
+install_requires = ['texttable']
+if sys.version_info < (2, 7):
+    install_requires.append('argparse')
+
 setup(
     name  = 'pymssql',
     version = '2.0.0b1',
@@ -310,6 +315,7 @@ setup(
     ],
     zip_safe = False,
     setup_requires=["Cython>=0.15.1"],
+    install_requires=install_requires,
     ext_modules = [
         Extension('_mssql', ['_mssql.pyx'],
             extra_compile_args = _extra_compile_args,
@@ -323,8 +329,12 @@ setup(
         ),
     ],
 
-    # don't remove this, otherwise the customization above in DevelopCmd
+    # don't remove `entry_points`, otherwise the customization above in DevelopCmd
     # will break.  You can safely add to it though, if needed.
-    entry_points = {}
+    entry_points = {
+        'console_scripts': [
+            'pymssql_shell = pymssql_shell:main'
+        ],
+    },
 
 )
