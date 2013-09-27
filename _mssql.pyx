@@ -1009,6 +1009,21 @@ cdef class MSSQLConnection:
 
         return row_dict
 
+    def worker(self, pipe, query_str):
+        try:
+            print("*** Worker thread started (query_str = %r)" % query_str)
+            foo = pipe[1].recv(6)
+            print("*** worker received foo = %r (query_str = %r)" % (foo, query_str))
+            rtc = dbsqlsend(self.dbproc)
+            print("*** calling dbsqlok (query_str = %r)" % query_str)
+            rtc = dbsqlok(self.dbproc)
+            print("*** returned from dbsqlok (query_str = %r)" % query_str)
+            # print("*** Worker thread with conn = %r; query_string = %r; returning from dbsqlok" % (pipe, query_str))
+        finally:
+            print("*** Sending stuff back to pipe[1] (query_str = %r)" % query_str)
+            pipe[1].send('foobar\0')
+            print("*** Sent stuff back to pipe[1] (query_str = %r)" % query_str)
+
     cdef format_and_run_query(self, query_string, params=None):
         """
         This is a helper function, which does most of the work needed by any
@@ -1041,10 +1056,38 @@ cdef class MSSQLConnection:
             dbcmd(self.dbproc, query_string_cstr)
 
             # Execute the query
-            rtc = dbsqlsend(self.dbproc)
+            # rtc = dbsqlsend(self.dbproc)
+            # if wait_callback:
+            #     wait_callback(self, query_string)
+
             if wait_callback:
-                wait_callback(self)
-            rtc = dbsqlok(self.dbproc)
+                # import socket
+                # avoid socket monkey patching
+                # import imp
+                # fp, pathname, description = imp.find_module('socket')
+                # try:
+                #     socket_ = imp.load_module('socket_', fp, pathname, description)
+                # finally:
+                #     if fp:
+                #         fp.close()
+                import gevent.socket
+                import socket
+                pipe = socket.socketpair()
+                import threading
+                thread = threading.Thread(target=self.worker, args=(pipe, query_string))
+                thread.daemon = True
+                thread.start()
+                print("Calling wait_write - query_string = %r" % (query_string,))
+                gevent.socket.wait_write(pipe[0].fileno())
+                pipe[0].send("hello\0")
+                print("Calling wait_read - query_string = %r" % (query_string,))
+                gevent.socket.wait_read(pipe[0].fileno())
+                foo = pipe[0].recv(7)
+                print("wait_read returned - query_string = %r foo = %r" % (query_string, foo))
+            else:
+                rtc = dbsqlsend(self.dbproc)
+                rtc = dbsqlok(self.dbproc)
+
             check_cancel_and_raise(rtc, self)
         finally:
             log("_mssql.MSSQLConnection.format_and_run_query() END")
