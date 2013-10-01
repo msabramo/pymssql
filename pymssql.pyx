@@ -382,6 +382,9 @@ cdef class Cursor:
 
             proc.bind(param_value, db_type, output=param_output)
         self._returnvalue = proc.execute()
+        print("*** callproc - execute returned %r" % self._returnvalue)
+        # self.nextset()
+        print("*** callproc - self.description = %r" % self.description)
         return tuple([proc.parameters[p] for p in proc.parameters])
 
     def close(self):
@@ -398,10 +401,14 @@ cdef class Cursor:
         try:
             if not params:
                 self._source._conn.execute_query(operation)
+                print("*** execute - did self._source._conn.execute_query with operation = %r" % (operation,))
             else:
                 self._source._conn.execute_query(operation, params)
+                print("*** execute - did self._source._conn.execute_query with operation = %r and params = %r" % (operation, params))
             self.description = self._source._conn.get_header()
+            print("*** execute - self.description = %r" % (self.description,))
             self._rownumber = self._source._conn.rows_affected
+            print("*** execute - self._rownumber = %r" % (self._rownumber,))
 
         except _mssql.MSSQLDatabaseException, e:
             if e.number in prog_errors:
@@ -423,10 +430,13 @@ cdef class Cursor:
 
     def nextset(self):
         try:
-            if not self._source._conn.nextresult():
+            next_result = self._source._conn.nextresult()
+            print("*** nextset: next_result = %r" % next_result)
+            if not next_result:
                 return None
             self._rownumber = 0
             self.description = self._source._conn.get_header()
+            print("*** nextset: self.description = %r" % self.description)
             return 1
 
         except _mssql.MSSQLDatabaseException, e:
@@ -482,8 +492,8 @@ cdef class Cursor:
             raise InterfaceError, e.args[0]
 
     def fetchall(self):
-        if self.description is None:
-            raise OperationalError('Statement not executed or executed statement has no resultset')
+        # if self.description is None:
+        #     raise OperationalError('Statement not executed or executed statement has no resultset')
 
         try:
             if self.as_dict:
@@ -493,6 +503,7 @@ cdef class Cursor:
                         for row in self._source._conn]
                 rows = [tuple([row[r] for r in sorted(row.keys()) if \
                         type(r) == int]) for row in rows]
+                print("*** fetchall: rows = %r" % (rows,))
             self._rownumber = self._source._conn.rows_affected
             return rows
         except _mssql.MSSQLDatabaseException, e:
@@ -503,6 +514,7 @@ cdef class Cursor:
     def __next__(self):
         try:
             row = self.getrow()
+            print("*** __next__: row = %r" % (row,))
             self._rownumber += 1
             return row
 
