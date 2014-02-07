@@ -819,7 +819,7 @@ cdef class MSSQLConnection:
             dbValue[0] = <BYTE *>binValue
             return 0
 
-        if dbtype[0] == SQLUUID and (PY_MAJOR_VERSION >= 2 and PY_MINOR_VERSION >= 5):
+        if dbtype[0] == SQLUUID:
             binValue = <BYTE *>PyMem_Malloc(16)
             memcpy(binValue, <char *>value.bytes_le, 16)
             length[0] = 16
