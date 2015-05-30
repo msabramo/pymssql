@@ -153,6 +153,7 @@ _extra_compile_args = [
 WINDOWS = False
 SYSTEM = platform.system()
 
+print("setup.py: os.environ => %r" % os.environ)
 print("setup.py: platform.system() => %r" % SYSTEM)
 print("setup.py: platform.architecture() => %r" % (platform.architecture(),))
 if SYSTEM == 'Linux':
