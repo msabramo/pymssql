@@ -166,6 +166,9 @@ BITNESS = struct.calcsize("P") * 8
 
 include_dirs = []
 library_dirs = []
+INCLUDE_PATH = os.getenv('INCLUDE_PATH')
+if INCLUDE_PATH:
+    include_dirs.extend(INCLUDE_PATH.split(':'))
 if sys.platform == 'win32':
     WINDOWS = True
 else:
